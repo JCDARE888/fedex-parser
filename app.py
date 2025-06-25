@@ -195,13 +195,44 @@ def parse_fedex_pdf():
 
 @app.route('/', methods=['GET'])
 def root():
-    """Health check endpoint"""
-    return jsonify({"message": "FedEx PDF Parser API is running"}), 200
+    """Home page with HTML display"""
+    return """
+    <html>
+    <head><title>FedEx PDF Parser</title></head>
+    <body>
+        <h1>🎉 FedEx PDF Parser is WORKING!</h1>
+        <p>Your API is live and ready to use.</p>
+        <p><a href="/health">Check Health</a></p>
+        <h2>📋 API Endpoints:</h2>
+        <ul>
+            <li><strong>POST /parse-fedex</strong> - Upload PDF files</li>
+            <li><strong>GET /health</strong> - Health check</li>
+        </ul>
+        <h2>🧪 Test Your API:</h2>
+        <p>Use curl or Postman to POST a PDF file to <code>/parse-fedex</code></p>
+        <p>Example: <code>curl -X POST -F "file=@fedex.pdf" /parse-fedex</code></p>
+    </body>
+    </html>
+    """
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
-    return jsonify({"status": "healthy", "message": "FedEx PDF Parser API"}), 200
+    """Health check with HTML display"""
+    return """
+    <html>
+    <head><title>Health Check</title></head>
+    <body>
+        <h1>✅ HEALTHY</h1>
+        <p>FedEx PDF Parser API is running perfectly!</p>
+        <ul>
+            <li>Status: Active</li>
+            <li>PDF Processing: Ready</li>
+            <li>All Systems: Go</li>
+        </ul>
+        <a href="/">← Back to Home</a>
+    </body>
+    </html>
+    """
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8001))
