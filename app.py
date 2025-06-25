@@ -195,22 +195,111 @@ def parse_fedex_pdf():
 
 @app.route('/', methods=['GET'])
 def root():
-    """Home page with HTML display"""
+    """Home page with file upload form"""
     return """
     <html>
-    <head><title>FedEx PDF Parser</title></head>
+    <head>
+        <title>FedEx PDF Parser</title>
+        <style>
+            body { 
+                font-family: Arial, sans-serif; 
+                max-width: 900px; 
+                margin: 0 auto; 
+                padding: 20px; 
+                background: #f8f9fa; 
+            }
+            .container { 
+                background: white; 
+                padding: 30px; 
+                border-radius: 10px; 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            }
+            .upload-area { 
+                border: 2px dashed #007bff; 
+                padding: 40px; 
+                text-align: center; 
+                margin: 20px 0; 
+                border-radius: 10px;
+                background: #f8f9ff;
+            }
+            .btn { 
+                background: #007bff; 
+                color: white; 
+                padding: 12px 25px; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer; 
+                font-size: 16px;
+                font-weight: bold;
+            }
+            .btn:hover { background: #0056b3; }
+            .info-box { 
+                background: #e8f5e8; 
+                padding: 20px; 
+                border-radius: 5px; 
+                margin: 20px 0; 
+                border-left: 4px solid #28a745;
+            }
+            .api-info { 
+                background: #fff3cd; 
+                padding: 15px; 
+                border-radius: 5px; 
+                margin: 20px 0; 
+                border-left: 4px solid #ffc107;
+            }
+            h1 { color: #333; text-align: center; }
+            h2 { color: #007bff; }
+            code { 
+                background: #f8f9fa; 
+                padding: 2px 6px; 
+                border-radius: 3px; 
+                font-family: monospace;
+            }
+        </style>
+    </head>
     <body>
-        <h1>🎉 FedEx PDF Parser is WORKING!</h1>
-        <p>Your API is live and ready to use.</p>
-        <p><a href="/health">Check Health</a></p>
-        <h2>📋 API Endpoints:</h2>
-        <ul>
-            <li><strong>POST /parse-fedex</strong> - Upload PDF files</li>
-            <li><strong>GET /health</strong> - Health check</li>
-        </ul>
-        <h2>🧪 Test Your API:</h2>
-        <p>Use curl or Postman to POST a PDF file to <code>/parse-fedex</code></p>
-        <p>Example: <code>curl -X POST -F "file=@fedex.pdf" /parse-fedex</code></p>
+        <div class="container">
+            <h1>🎉 FedEx PDF Parser</h1>
+            <p style="text-align: center; font-size: 18px;">Upload your FedEx PDF to extract shipping data instantly</p>
+            
+            <div class="upload-area">
+                <form action="/parse-fedex" method="post" enctype="multipart/form-data">
+                    <h3>📄 Upload FedEx PDF File</h3>
+                    <p>Select your FedEx PDF document to extract shipping information</p>
+                    <input type="file" name="file" accept=".pdf" required style="margin: 10px;">
+                    <br><br>
+                    <button type="submit" class="btn">🚀 Parse PDF</button>
+                </form>
+            </div>
+            
+            <div class="info-box">
+                <h2>✅ What This Tool Extracts:</h2>
+                <ul>
+                    <li><strong>Ship Date</strong> - Shipping date in MM/DD/YYYY format</li>
+                    <li><strong>Air Waybill Number</strong> - 12-digit tracking number</li>
+                    <li><strong>Customer Name</strong> - Recipient name</li>
+                    <li><strong>Order Number</strong> - 4-digit order reference</li>
+                    <li><strong>Total Amount</strong> - Final shipping cost</li>
+                </ul>
+            </div>
+            
+            <div class="api-info">
+                <h2>🔧 API Information:</h2>
+                <ul>
+                    <li><strong>Endpoint:</strong> POST /parse-fedex</li>
+                    <li><strong>Accepts:</strong> PDF files via multipart/form-data</li>
+                    <li><strong>Returns:</strong> JSON array of shipping data</li>
+                    <li><strong>Formats Supported:</strong> Standard, Tendered Date, Customs Entry Date</li>
+                </ul>
+                
+                <h3>Example API Usage:</h3>
+                <code>curl -X POST -F "file=@fedex.pdf" https://fedex-pdf-parser.onrender.com/parse-fedex</code>
+            </div>
+            
+            <p style="text-align: center;">
+                <a href="/health" style="color: #007bff;">📊 Check API Health</a>
+            </p>
+        </div>
     </body>
     </html>
     """
@@ -221,15 +310,18 @@ def health_check():
     return """
     <html>
     <head><title>Health Check</title></head>
-    <body>
-        <h1>✅ HEALTHY</h1>
-        <p>FedEx PDF Parser API is running perfectly!</p>
-        <ul>
-            <li>Status: Active</li>
-            <li>PDF Processing: Ready</li>
-            <li>All Systems: Go</li>
-        </ul>
-        <a href="/">← Back to Home</a>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px;">
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #28a745;">✅ SYSTEM HEALTHY</h1>
+            <p>FedEx PDF Parser API is running perfectly!</p>
+            <ul>
+                <li><strong>Status:</strong> Active ✅</li>
+                <li><strong>PDF Processing:</strong> Ready ✅</li>
+                <li><strong>All Systems:</strong> Go ✅</li>
+                <li><strong>Uptime:</strong> 24/7 ✅</li>
+            </ul>
+            <a href="/" style="color: #007bff; text-decoration: none; font-weight: bold;">← Back to Home</a>
+        </div>
     </body>
     </html>
     """
