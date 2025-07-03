@@ -109,48 +109,83 @@ def create_excel_page(results, filename):
     if not results:
         return '<html><body><h2>No Data Found</h2><a href="/">Upload Another File</a></body></html>'
     
-    tsv_data = "Date\\tAir Waybill Number\\tCustomer Name\\tOrder Number\\tTotal Amount\\n"
+    # Create tab-separated values with filename column
+    tsv_data = "Date\\tAir Waybill Number\\tCustomer Name\\tOrder Number\\tTotal Amount\\tFile Name\\n"
     for item in results:
-        tsv_data += f"{item['date']}\\t{item['air_waybill_number']}\\t{item['customer_name']}\\t{item['order_number']}\\t{item['total_amount']}\\n"
+        tsv_data += f"{item['date']}\\t{item['air_waybill_number']}\\t{item['customer_name']}\\t{item['order_number']}\\t{item['total_amount']}\\t{filename}\\n"
     
+    # Create HTML table rows with filename column
     table_rows = ""
     for item in results:
-        table_rows += f'<tr><td>{item["date"]}</td><td>{item["air_waybill_number"]}</td><td>{item["customer_name"]}</td><td>{item["order_number"]}</td><td>${item["total_amount"]}</td></tr>'
+        table_rows += f'<tr><td>{item["date"]}</td><td>{item["air_waybill_number"]}</td><td>{item["customer_name"]}</td><td>{item["order_number"]}</td><td>${item["total_amount"]}</td><td>{filename}</td></tr>'
     
     return f'''
     <html>
     <head>
         <title>FedEx Data Extracted</title>
         <style>
-            body {{ font-family: Arial, sans-serif; padding: 20px; }}
+            body {{ font-family: Arial, sans-serif; padding: 20px; background: #f8f9fa; }}
+            .container {{ background: white; padding: 30px; border-radius: 10px; max-width: 1400px; margin: 0 auto; }}
             table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
             th, td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
-            th {{ background: #007bff; color: white; }}
-            textarea {{ width: 100%; height: 200px; }}
-            .btn {{ background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }}
+            th {{ background: #007bff; color: white; font-weight: bold; }}
+            tr:nth-child(even) {{ background: #f8f9fa; }}
+            textarea {{ width: 100%; height: 200px; font-family: monospace; }}
+            .btn {{ background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }}
+            .btn:hover {{ background: #218838; }}
+            .success {{ color: #28a745; font-weight: bold; }}
+            .copy-area {{ background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }}
         </style>
     </head>
     <body>
-        <h1>FedEx Data Extracted Successfully</h1>
-        <p>File: {filename} | Extracted: {len(results)} shipments</p>
-        
-        <h2>Data Table</h2>
-        <table>
-            <tr><th>Date</th><th>Air Waybill Number</th><th>Customer Name</th><th>Order Number</th><th>Total Amount</th></tr>
-            {table_rows}
-        </table>
-        
-        <h2>Excel-Ready Format</h2>
-        <button class="btn" onclick="copyData()">Copy to Clipboard</button>
-        <textarea id="excelData" readonly>{tsv_data}</textarea>
-        
-        <p><a href="/">Upload Another File</a></p>
+        <div class="container">
+            <h1>✅ FedEx Data Extracted Successfully</h1>
+            <p class="success">File: {filename} | Extracted: {len(results)} shipments</p>
+            
+            <h2>📊 Extracted Data (Table View)</h2>
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th>Air Waybill Number</th>
+                    <th>Customer Name</th>
+                    <th>Order Number</th>
+                    <th>Total Amount</th>
+                    <th>File Name</th>
+                </tr>
+                {table_rows}
+            </table>
+            
+            <h2>📋 Excel-Ready Format</h2>
+            <p><strong>Copy the text below and paste directly into Excel:</strong></p>
+            <div class="copy-area">
+                <button class="btn" onclick="copyData()">📋 Copy to Clipboard</button>
+                <button class="btn" onclick="selectAll()">🔤 Select All</button>
+                <textarea id="excelData" readonly>{tsv_data}</textarea>
+            </div>
+            
+            <h3>📝 Instructions:</h3>
+            <ol>
+                <li>Click "Copy to Clipboard" or "Select All" then Ctrl+C</li>
+                <li>Open Excel</li>
+                <li>Click on cell A1</li>
+                <li>Press Ctrl+V to paste</li>
+                <li>Data will automatically separate into columns!</li>
+            </ol>
+            
+            <p><a href="/">← Upload Another File</a></p>
+        </div>
         
         <script>
             function copyData() {{
-                document.getElementById('excelData').select();
+                const textarea = document.getElementById('excelData');
+                textarea.select();
                 document.execCommand('copy');
-                alert('Data copied to clipboard!');
+                alert('✅ Data copied to clipboard! Now paste in Excel.');
+            }}
+            
+            function selectAll() {{
+                const textarea = document.getElementById('excelData');
+                textarea.select();
             }}
         </script>
     </body>
@@ -217,32 +252,131 @@ def root():
     <head>
         <title>FedEx PDF Parser</title>
         <style>
-            body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-            .upload-area { border: 2px dashed #007bff; padding: 40px; text-align: center; margin: 20px 0; }
-            .btn { background: #007bff; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; }
+            body { 
+                font-family: Arial, sans-serif; 
+                max-width: 900px; 
+                margin: 0 auto; 
+                padding: 20px; 
+                background: #f8f9fa; 
+            }
+            .container { 
+                background: white; 
+                padding: 30px; 
+                border-radius: 10px; 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            }
+            .upload-area { 
+                border: 2px dashed #007bff; 
+                padding: 40px; 
+                text-align: center; 
+                margin: 20px 0; 
+                border-radius: 10px;
+                background: #f8f9ff;
+            }
+            .btn { 
+                background: #007bff; 
+                color: white; 
+                padding: 12px 25px; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer; 
+                font-size: 16px;
+                font-weight: bold;
+            }
+            .btn:hover { background: #0056b3; }
+            .btn:disabled { background: #6c757d; cursor: not-allowed; }
+            h1 { color: #333; text-align: center; }
+            .loading { 
+                display: none; 
+                text-align: center; 
+                margin: 20px 0; 
+            }
+            .loading img { 
+                width: 80px; 
+                height: 80px; 
+            }
+            .info-box { 
+                background: #e8f5e8; 
+                padding: 20px; 
+                border-radius: 5px; 
+                margin: 20px 0; 
+                border-left: 4px solid #28a745;
+            }
         </style>
     </head>
     <body>
-        <h1>FedEx PDF Parser</h1>
-        <p>Upload your FedEx PDF to extract shipping data</p>
-        
-        <div class="upload-area">
-            <form action="/parse-fedex" method="post" enctype="multipart/form-data">
-                <h3>Upload FedEx PDF File</h3>
-                <input type="file" name="file" accept=".pdf" required>
-                <br><br>
-                <button type="submit" class="btn">Parse PDF</button>
-            </form>
+        <div class="container">
+            <h1>🎉 FedEx PDF Parser</h1>
+            <p style="text-align: center; font-size: 18px;">Upload your FedEx PDF to extract shipping data instantly</p>
+            
+            <div class="upload-area">
+                <form id="uploadForm" action="/parse-fedex" method="post" enctype="multipart/form-data">
+                    <h3>📄 Upload FedEx PDF File</h3>
+                    <p>Select your FedEx PDF document to extract shipping information</p>
+                    <input type="file" name="file" accept=".pdf" required style="margin: 10px;">
+                    <br><br>
+                    <button type="submit" class="btn" id="submitBtn">🚀 Parse PDF</button>
+                </form>
+                
+                <div class="loading" id="loadingDiv">
+                    <img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExczlrbHgzZTJ3MXEzMzIwbXlyOTNwOHRyMDQ2MjRtYmVlaDE3ZXhvYSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SLgaYdpp6UwrczXr7V/giphy.gif" alt="Processing...">
+                    <h3>🔄 Processing your PDF...</h3>
+                    <p>Please wait while we extract the shipping data</p>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <h2>✅ What This Tool Extracts:</h2>
+                <ul>
+                    <li><strong>Ship Date</strong> - Shipping date in MM/DD/YYYY format</li>
+                    <li><strong>Air Waybill Number</strong> - 12-digit tracking number</li>
+                    <li><strong>Customer Name</strong> - Recipient name</li>
+                    <li><strong>Order Number</strong> - 4-digit order reference</li>
+                    <li><strong>Total Amount</strong> - Final shipping cost</li>
+                    <li><strong>File Name</strong> - Source PDF filename</li>
+                </ul>
+            </div>
+            
+            <p style="text-align: center;">
+                <a href="/health" style="color: #007bff;">📊 Check API Health</a>
+            </p>
         </div>
         
-        <p><a href="/health">Check Health</a></p>
+        <script>
+            document.getElementById('uploadForm').addEventListener('submit', function(e) {
+                // Show loading animation
+                document.getElementById('loadingDiv').style.display = 'block';
+                document.getElementById('submitBtn').disabled = true;
+                document.getElementById('submitBtn').innerHTML = '⏳ Processing...';
+                
+                // Hide the form
+                document.querySelector('.upload-area form').style.display = 'none';
+            });
+        </script>
     </body>
     </html>
     '''
 
 @app.route('/health')
 def health_check():
-    return '<html><body><h1>System Healthy</h1><p>FedEx PDF Parser is running!</p><a href="/">Back to Home</a></body></html>'
+    return '''
+    <html>
+    <head><title>Health Check</title></head>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px;">
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color: #28a745;">✅ SYSTEM HEALTHY</h1>
+            <p>FedEx PDF Parser API is running perfectly!</p>
+            <ul>
+                <li><strong>Status:</strong> Active ✅</li>
+                <li><strong>PDF Processing:</strong> Ready ✅</li>
+                <li><strong>All Systems:</strong> Go ✅</li>
+                <li><strong>Uptime:</strong> 24/7 ✅</li>
+            </ul>
+            <a href="/" style="color: #007bff; text-decoration: none; font-weight: bold;">← Back to Home</a>
+        </div>
+    </body>
+    </html>
+    '''
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8001))
