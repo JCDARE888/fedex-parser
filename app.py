@@ -130,11 +130,120 @@ def extract_fedex_data(pdf_text):
     
     return results
 
+def create_excel_format_page(results, filename):
+    """Create HTML page with Excel-ready format"""
+    
+    if not results:
+        return """
+        <html>
+        <head><title>No Data Found</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2>❌ No FedEx Data Found</h2>
+            <p>No shipping data could be extracted from the uploaded PDF.</p>
+            <a href="/">← Upload Another File</a>
+        </body>
+        </html>
+        """
+    
+    # Create tab-separated values for easy Excel copying
+    tsv_data = "Date\tAir Waybill Number\tCustomer Name\tOrder Number\tTotal Amount\n"
+    for item in results:
+        tsv_data += f"{item['date']}\t{item['air_waybill_number']}\t{item['customer_name']}\t{item['order_number']}\t{item['total_amount']}\n"
+    
+    # Create HTML table
+    table_rows = ""
+    for item in results:
+        table_rows += f"""
+        <tr>
+            <td>{item['date']}</td>
+            <td>{item['air_waybill_number']}</td>
+            <td>{item['customer_name']}</td>
+            <td>{item['order_number']}</td>
+            <td>${item['total_amount']}</td>
+        </tr>
+        """
+    
+    return f"""
+    <html>
+    <head>
+        <title>FedEx Data Extracted</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; padding: 20px; background: #f8f9fa; }}
+            .container {{ background: white; padding: 30px; border-radius: 10px; max-width: 1200px; margin: 0 auto; }}
+            table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+            th, td {{ border: 1px solid #ddd; padding: 12px; text-align: left; }}
+            th {{ background: #007bff; color: white; font-weight: bold; }}
+            tr:nth-child(even) {{ background: #f8f9fa; }}
+            .copy-area {{ background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }}
+            .btn {{ background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }}
+            .btn:hover {{ background: #218838; }}
+            textarea {{ width: 100%; height: 200px; font-family: monospace; }}
+            .success {{ color: #28a745; font-weight: bold; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>✅ FedEx Data Extracted Successfully</h1>
+            <p class="success">File: {filename} | Extracted: {len(results)} shipments</p>
+            
+            <h2>📊 Extracted Data (Table View)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Air Waybill Number</th>
+                        <th>Customer Name</th>
+                        <th>Order Number</th>
+                        <th>Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {table_rows}
+                </tbody>
+            </table>
+            
+            <h2>📋 Excel-Ready Format</h2>
+            <p><strong>Copy the text below and paste directly into Excel:</strong></p>
+            <div class="copy-area">
+                <button class="btn" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+                <button class="btn" onclick="selectAll()">🔤 Select All</button>
+                <textarea id="excelData" readonly>{tsv_data}</textarea>
+            </div>
+            
+            <h3>📝 Instructions:</h3>
+            <ol>
+                <li>Click "Copy to Clipboard" or "Select All" then Ctrl+C</li>
+                <li>Open Excel</li>
+                <li>Click on cell A1</li>
+                <li>Press Ctrl+V to paste</li>
+                <li>Data will automatically separate into columns!</li>
+            </ol>
+            
+            <p><a href="/">← Upload Another File</a></p>
+        </div>
+        
+        <script>
+            function copyToClipboard() {{
+                const textarea = document.getElementById('excelData');
+                textarea.select();
+                document.execCommand('copy');
+                alert('✅ Data copied to clipboard! Now paste in Excel.');
+            }}
+            
+            function selectAll() {{
+                const textarea = document.getElementById('excelData');
+                textarea.select();
+            }}
+        </script>
+    </body>
+    </html>
+    """
+
 @app.route('/parse-fedex', methods=['POST'])
 def parse_fedex_pdf():
     """
     Parse FedEx PDF and extract shipping data.
-    Accepts multipart/form-data with PDF file upload.
+    Returns HTML table for web uploads, JSON for API calls.
     """
     try:
         # Check if file is present in request
@@ -170,13 +279,21 @@ def parse_fedex_pdf():
             
             if not pdf_text.strip():
                 logger.warning("No text found in PDF")
-                return jsonify([]), 200
-            
-            # Extract FedEx data from the text
-            results = extract_fedex_data(pdf_text)
+                results = []
+            else:
+                # Extract FedEx data from the text
+                results = extract_fedex_data(pdf_text)
             
             logger.info(f"Successfully extracted {len(results)} FedEx entries")
-            return jsonify(results), 200
+            
+            # Check if request is from web form (has User-Agent) or API call
+            user_agent = request.headers.get('User-Agent', '')
+            if 'Mozilla' in user_agent or 'Chrome' in user_agent or 'Safari' in user_agent:
+                # Return HTML table for web browsers
+                return create_excel_format_page(results, filename)
+            else:
+                # Return JSON for API calls
+                return jsonify(results), 200
             
         except Exception as e:
             logger.error(f"Error processing PDF: {str(e)}")
@@ -259,7 +376,7 @@ def root():
     </head>
     <body>
         <div class="container">
-            <h1>🤯 FedEx PDF ASS BREAKER</h1>
+            <h1>🎉 FedEx PDF Parser</h1>
             <p style="text-align: center; font-size: 18px;">Upload your FedEx PDF to extract shipping data instantly</p>
             
             <div class="upload-area">
